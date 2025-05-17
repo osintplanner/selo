@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -168,14 +169,7 @@
             pdfMake.createPdf(docDefinition).download(fileName);
         }
 
-        async function getTransactionDate(txHash) {
-            const receipt = await web3.eth.getTransactionReceipt(txHash);
-            const block = await web3.eth.getBlock(receipt.blockNumber);
-            const timestamp = new Date(block.timestamp * 1000);
-            return timestamp.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
-        }
-		
-		window.registerHashOnChain = async function(hash) {
+        window.registerHashOnChain = async function(hash) {
             try {
                 const accounts = await web3.eth.getAccounts();
                 const gasPrice = await web3.eth.getGasPrice();
@@ -188,8 +182,7 @@
                     data: "0x" + hash
                 };
                 const receipt = await web3.eth.sendTransaction(tx);
-                const date = await getTransactionDate(receipt.transactionHash);
-                return { txHash: receipt.transactionHash, date: date };
+                return { txHash: receipt.transactionHash, date: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) };
             } catch (err) {
                 alert("Erro ao registrar na blockchain: " + err.message);
                 return null;
