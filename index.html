@@ -84,9 +84,24 @@
         }
     </style>
     <script>
-        window.onload = function() {
-            alert("Bem-vindo ao SELO - Sistema de Evidências com Log On-chain.\n\nA importância de utilizar uma base de dados descentralizada e imutável como a blockchain reside na garantia de integridade das informações. O registro da evidência com um carimbo de data e hora imutável permite comprovar que o arquivo não foi alterado, garantindo que a marca temporal registrada na blockchain representa o momento exato do processamento da evidência, sem possibilidade de manipulação.");
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const popup = document.createElement('div');
+            popup.style.position = 'fixed';
+            popup.style.top = '50%';
+            popup.style.left = '50%';
+            popup.style.transform = 'translate(-50%, -50%)';
+            popup.style.background = '#333';
+            popup.style.color = '#e0e0e0';
+            popup.style.fontFamily = 'Arial, sans-serif';
+            popup.style.padding = '20px';
+            popup.style.borderRadius = '12px';
+            popup.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.5)';
+            popup.style.zIndex = '1000';
+            popup.style.maxWidth = '90%';
+            popup.style.textAlign = 'center';
+            popup.innerHTML = "<h3>Bem-vindo ao SELO</h3><p>A importância de utilizar uma base de dados descentralizada e imutável como a blockchain reside na garantia de integridade das informações. O registro da evidência com um carimbo de data e hora imutável permite comprovar que o arquivo não foi alterado, garantindo que a marca temporal registrada na blockchain representa o momento exato do processamento da evidência, sem possibilidade de manipulação.<p>Vytautas Zumas</p><button onclick='this.parentNode.remove()' style='margin-top: 10px; padding: 8px 16px; border: none; background-color: #00e6e6; color: #000; border-radius: 8px;'>Fechar</button>";
+            document.body.appendChild(popup);
+        });
     </script>
 </head>
 <body>
