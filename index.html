@@ -54,13 +54,13 @@
         }
 
         .logo {
-            width: 200px;
-            height: 200px;
-            margin-bottom: -2rem;
+            width: 120px;
+            height: 120px;
+            margin-bottom: 1rem;
             filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.4));
         }
 
-        h1, h2, h3 {
+        h1, h2, h3, h4 {
             font-weight: 600;
             margin-bottom: 1rem;
             color: white;
@@ -84,6 +84,12 @@
             font-size: 1.25rem;
             color: var(--gray);
             margin-top: 1.5rem;
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            color: var(--light);
+            margin-bottom: 0.5rem;
         }
 
         .subtitle {
@@ -278,52 +284,78 @@
             color: white;
         }
 
-        /* Save dialog styles */
-        .save-dialog {
+        /* Evidence list styles */
+        .evidence-list-container {
+            margin-top: 1.5rem;
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(15, 23, 42, 0.9);
-            z-index: 1001;
-            align-items: center;
-            justify-content: center;
         }
 
-        .save-dialog.active {
-            display: flex;
-        }
-
-        .save-dialog-content {
-            background: var(--dark);
+        .evidence-list {
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--border-radius);
-            padding: 2rem;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: var(--box-shadow);
+            padding: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
         }
 
-        .save-dialog h3 {
-            margin-bottom: 1.5rem;
-            color: white;
+        .evidence-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .save-dialog-buttons {
+        .evidence-item span {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .remove-evidence {
+            color: #ef4444;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Actions container */
+        .actions-container {
             display: flex;
             gap: 1rem;
-            margin-top: 1.5rem;
+            margin-top: 1rem;
             justify-content: flex-end;
         }
 
-        /* Adicionar novo estilo para o botão de nova evidência */
-        .new-evidence-btn {
+        .finish-button {
             background-color: var(--secondary);
         }
 
-        .new-evidence-btn:hover {
+        .finish-button:hover {
             background-color: #0da271;
+        }
+
+        .clear-button {
+            background-color: #ef4444;
+        }
+
+        .clear-button:hover {
+            background-color: #dc2626;
+        }
+
+        /* Animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
         }
 
         @media (max-width: 768px) {
@@ -343,19 +375,9 @@
                 font-size: 1.25rem;
             }
 
-            .save-dialog-buttons {
+            .actions-container {
                 flex-direction: column;
             }
-        }
-
-        /* Animation */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .animate-spin {
-            animation: spin 1s linear infinite;
         }
     </style>
 </head>
@@ -387,7 +409,7 @@
         </div>
 
         <div class="card">
-            <h3>Cadastro de Evidência</h3>
+            <h3>Cadastro de Evidências</h3>
             <form id="evidence-form">
                 <div class="form-group">
                     <label for="investigation-name">Nome da Investigação</label>
@@ -409,19 +431,40 @@
                     <input type="file" id="file-upload" required>
                 </div>
                 
-                <button type="button" onclick="registerEvidence()">
+                <button type="button" onclick="addEvidence()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 15V3M12 15L8 11M12 15L16 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M2 17L2.621 19.485C2.72915 19.9177 2.97842 20.3018 3.328 20.576C3.67757 20.8502 4.10704 20.9984 4.549 21H19.451C19.893 20.9984 20.3224 20.8502 20.672 20.576C21.0216 20.3018 21.2709 19.9177 21.379 19.485L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M12 6V18M6 12H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
-                    Registrar Evidência
+                    Adicionar Evidência
                 </button>
             </form>
+
+            <div class="evidence-list-container" id="evidence-list-container">
+                <h4>Evidências Adicionadas</h4>
+                <div class="evidence-list" id="evidence-list">
+                    <!-- Itens serão adicionados dinamicamente aqui -->
+                </div>
+                
+                <div class="actions-container" id="actions-container">
+                    <button class="finish-button" onclick="registerAllEvidences()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Registrar Tudo
+                    </button>
+                    <button class="clear-button secondary" onclick="clearAllEvidences()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 7L7 19M7 7L19 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Limpar Tudo
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="footer">
             <p>Sistema de registro imutável de evidências na blockchain</p>
-            <p>© 2025 SELO - Vytautas Zumas</p>
+            <p>© 2023 SELO - Vytautas Zumas</p>
         </div>
     </div>
 
@@ -437,42 +480,11 @@
         </div>
     </div>
 
-    <!-- Save PDF Dialog -->
-    <div class="save-dialog" id="save-dialog">
-        <div class="save-dialog-content">
-            <h3>Salvar Relatório</h3>
-            <p>O relatório PDF está pronto para ser salvo. Por favor, escolha como deseja proceder:</p>
-            
-            <div class="save-dialog-buttons">
-                <button class="secondary" onclick="cancelSave()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    Fechar
-                </button>
-                <button onclick="savePDF()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 15V3M12 15L8 11M12 15L16 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M2 17L2.621 19.485C2.72915 19.9177 2.97842 20.3018 3.328 20.576C3.67757 20.8502 4.10704 20.9984 4.549 21H19.451C19.893 20.9984 20.3224 20.8502 20.672 20.576C21.0216 20.3018 21.2709 19.9177 21.379 19.485L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    Salvar PDF
-                </button>
-                <button class="new-evidence-btn" onclick="newEvidence()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 6V18M6 12H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    Nova Evidência
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script>
         // Variáveis globais
         let web3;
         let connectedAddress;
-        let currentPDF = null;
-        let currentFileName = '';
+        let evidences = []; // Array para armazenar múltiplas evidências
         let registerButtonOriginalHTML = '';
 
         // Modal functions
@@ -482,30 +494,6 @@
 
         function closeModal() {
             document.getElementById('welcome-modal').classList.remove('active');
-        }
-
-        // Save dialog functions
-        function showSaveDialog(pdf, fileName) {
-            currentPDF = pdf;
-            currentFileName = fileName;
-            document.getElementById('save-dialog').classList.add('active');
-        }
-
-        function cancelSave() {
-            document.getElementById('save-dialog').classList.remove('active');
-            currentPDF = null;
-            currentFileName = '';
-        }
-
-        function savePDF() {
-            if (currentPDF) {
-                currentPDF.getBlob(function(blob) {
-                    saveAs(blob, currentFileName);
-                    document.getElementById('save-dialog').classList.remove('active');
-                    currentPDF = null;
-                    currentFileName = '';
-                });
-            }
         }
 
         // Show modal on first visit
@@ -580,120 +568,8 @@
             return `${day}${month}${year}`;
         }
 
-        function generatePDF(data) {
-            return new Promise((resolve) => {
-                // Definir as fontes explicitamente
-                pdfMake.fonts = {
-                    Roboto: {
-                        normal: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf',
-                        bold: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf',
-                        italics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Italic.ttf',
-                        bolditalics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-MediumItalic.ttf'
-                    }
-                };
-
-                const docDefinition = {
-                    // Definir a fonte padrão
-                    defaultStyle: {
-                        font: 'Roboto',
-                        fontSize: 12,
-                        margin: [0, 2, 0, 2]
-                    },
-                    content: [
-                        { text: 'Relatório de Registro de Evidência', style: 'header' },
-                        { text: '\n' },
-                        { 
-                            table: {
-                                widths: ['auto', '*'],
-                                body: [
-                                    ['Nome da Investigação:', data.investigationName],
-                                    ['Nome do Responsável:', data.responsibleName],
-                                    ['Instituição:', data.institution],
-                                    ['Arquivo:', data.fileName],
-                                    ['Hash SHA-256:', { text: data.hash, style: 'mono' }],
-                                    ['TXID:', { text: data.txHash, link: 'https://polygonscan.com/tx/' + data.txHash, color: '#2563eb' }],
-                                    ['Data/Hora (GMT-3):', data.date]
-                                ]
-                            }
-                        },
-                        { text: '\n' },
-                        { 
-                            text: 'Nota: O hash registrado na transação contém o prefixo "0x" devido ao formato hexadecimal exigido pela blockchain. Para verificar a integridade, desconsidere o prefixo "0x" ao recalcular o hash.',
-                            style: 'note',
-                            margin: [0, 10, 0, 0]
-                        }
-                    ],
-                    styles: {
-                        header: { 
-                            fontSize: 18, 
-                            bold: true,
-                            alignment: 'center',
-                            margin: [0, 0, 0, 10]
-                        },
-                        mono: {
-                            font: 'Roboto',
-                            fontSize: 10
-                        },
-                        note: {
-                            fontSize: 10,
-                            color: '#666'
-                        }
-                    }
-                };
-                
-                const fileName = `Relatório_${data.hash.slice(0, 7)}_${formatDate(new Date())}.pdf`;
-                const pdfDoc = pdfMake.createPdf(docDefinition);
-                
-                resolve({ pdfDoc, fileName });
-            });
-        }
-
-        window.registerHashOnChain = async function(hash) {
-            try {
-                const accounts = await web3.eth.getAccounts();
-                const gasPrice = await web3.eth.getGasPrice();
-                const tx = {
-                    from: accounts[0],
-                    to: accounts[0],
-                    value: web3.utils.toWei('0', 'ether'),
-                    gas: 50000,
-                    gasPrice: gasPrice,
-                    data: "0x" + hash
-                };
-                const receipt = await web3.eth.sendTransaction(tx);
-                return { txHash: receipt.transactionHash, date: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) };
-            } catch (err) {
-                alert("Erro ao registrar na blockchain: " + err.message);
-                return null;
-            }
-        }
-
-        // Função para resetar o estado do botão de registro
-        function resetRegisterButton() {
-            const btn = document.querySelector('#evidence-form button');
-            btn.innerHTML = registerButtonOriginalHTML;
-            btn.disabled = false;
-        }
-
-        // Modificar a função newEvidence para resetar o botão
-        function newEvidence() {
-            // Fechar o diálogo
-            document.getElementById('save-dialog').classList.remove('active');
-            
-            // Resetar o estado do botão de registro
-            resetRegisterButton();
-            
-            // Limpar o formulário
-            document.getElementById("evidence-form").reset();
-            
-            // Rolar para o topo do formulário
-            document.getElementById("evidence-form").scrollIntoView({ behavior: 'smooth' });
-            
-            // Focar no primeiro campo
-            document.getElementById("investigation-name").focus();
-        }
-
-        window.registerEvidence = async function() {
+        // Função para adicionar nova evidência à lista
+        async function addEvidence() {
             if (!connectedAddress) {
                 alert("Por favor, conecte sua carteira primeiro.");
                 return;
@@ -716,41 +592,394 @@
             }
 
             const btn = document.querySelector('#evidence-form button');
-            
-            try {
-                // Show loading state
-                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-spin"><path d="M12 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 18V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4.93 4.93L7.76 7.76" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.24 16.24L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 12H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4.93 19.07L7.76 16.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.24 7.76L19.07 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Processando...';
-                btn.disabled = true;
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-spin"><path d="M12 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 18V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4.93 4.93L7.76 7.76" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.24 16.24L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 12H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4.93 19.07L7.76 16.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.24 7.76L19.07 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Processando...';
+            btn.disabled = true;
 
+            try {
                 const fileName = fileInput.name;
                 const hash = await calculateHash(fileInput);
-                const result = await registerHashOnChain(hash);
                 
-                if (result) {
-                    const data = {
-                        investigationName,
-                        responsibleName,
-                        institution,
-                        fileName,
-                        hash,
-                        txHash: result.txHash,
-                        date: result.date
-                    };
-                    
-                    // Generate PDF and show save dialog
-                    const { pdfDoc, fileName: pdfFileName } = await generatePDF(data);
-                    showSaveDialog(pdfDoc, pdfFileName);
-                    
-                    // Show success message
-                    alert("Evidência registrada com sucesso na blockchain!\n\nTXID: " + result.txHash);
-                }
+                // Adicionar à lista de evidências (registro na blockchain será feito depois)
+                evidences.push({
+                    investigationName,
+                    responsibleName,
+                    institution,
+                    fileName,
+                    hash,
+                    file: fileInput
+                });
+
+                // Atualizar a lista visual
+                updateEvidenceList();
+                
+                // Limpar apenas o campo de arquivo
+                document.getElementById("file-upload").value = '';
+                
+                // Mostrar lista e ações
+                document.getElementById('evidence-list-container').style.display = 'block';
             } catch (err) {
-                alert("Ocorreu um erro: " + err.message);
+                alert("Erro ao calcular hash: " + err.message);
             } finally {
-                // Restaurar o botão ao estado original
-                resetRegisterButton();
+                // Restaurar botão
+                btn.innerHTML = registerButtonOriginalHTML;
+                btn.disabled = false;
             }
         }
+
+        // Atualizar a lista visual de evidências
+        function updateEvidenceList() {
+            const listContainer = document.getElementById('evidence-list');
+            // Limpar lista existente
+            listContainer.innerHTML = '';
+            
+            // Adicionar cada evidência
+            evidences.forEach((evidence, index) => {
+                const item = document.createElement('div');
+                item.className = 'evidence-item';
+                item.innerHTML = `
+                    <span>${evidence.fileName} (${evidence.hash.substring(0, 8)}...)</span>
+                    <button class="remove-evidence" onclick="removeEvidence(${index})" title="Remover evidência">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        // Remover evidência da lista
+        function removeEvidence(index) {
+            if (confirm("Remover esta evidência da lista?")) {
+                evidences.splice(index, 1);
+                updateEvidenceList();
+                
+                // Se não houver mais evidências, esconder a lista
+                if (evidences.length === 0) {
+                    document.getElementById('evidence-list-container').style.display = 'none';
+                }
+            }
+        }
+
+        // Limpar todas as evidências
+        function clearAllEvidences() {
+            if (evidences.length === 0) return;
+            
+            if (confirm("Tem certeza que deseja limpar todas as evidências adicionadas?")) {
+                evidences = [];
+                document.getElementById('evidence-list-container').style.display = 'none';
+                document.getElementById("file-upload").value = '';
+                updateEvidenceList();
+            }
+        }
+
+        // Registrar todas as evidências na blockchain e gerar relatório
+        async function registerAllEvidences() {
+            if (evidences.length === 0) {
+                alert("Adicione pelo menos uma evidência antes de registrar.");
+                return;
+            }
+
+            if (!connectedAddress) {
+                alert("Por favor, conecte sua carteira primeiro.");
+                return;
+            }
+
+            const btn = document.querySelector('.finish-button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-spin"><path d="M12 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 18V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4.93 4.93L7.76 7.76" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.24 16.24L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 12H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4.93 19.07L7.76 16.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.24 7.76L19.07 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Registrando...';
+            btn.disabled = true;
+
+            try {
+                // Registrar cada hash na blockchain
+                const registeredEvidences = [];
+                
+                for (const evidence of evidences) {
+                    const result = await registerHashOnChain(evidence.hash);
+                    if (result) {
+                        registeredEvidences.push({
+                            ...evidence,
+                            txHash: result.txHash,
+                            date: result.date
+                        });
+                    }
+                }
+
+                if (registeredEvidences.length > 0) {
+                    // Gerar relatório consolidado
+                    await generateConsolidatedPDF(registeredEvidences);
+                    
+                    // Mostrar mensagem de sucesso
+                    alert(`${registeredEvidences.length} evidência(s) registrada(s) com sucesso na blockchain!`);
+                    
+                    // Limpar tudo após sucesso
+                    clearAllEvidences();
+                }
+            } catch (err) {
+                alert("Ocorreu um erro durante o registro: " + err.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Função para registrar um hash na blockchain
+        async function registerHashOnChain(hash) {
+            try {
+                const accounts = await web3.eth.getAccounts();
+                const gasPrice = await web3.eth.getGasPrice();
+                const tx = {
+                    from: accounts[0],
+                    to: accounts[0],
+                    value: web3.utils.toWei('0', 'ether'),
+                    gas: 50000,
+                    gasPrice: gasPrice,
+                    data: "0x" + hash
+                };
+                const receipt = await web3.eth.sendTransaction(tx);
+                return { 
+                    txHash: receipt.transactionHash, 
+                    date: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) 
+                };
+            } catch (err) {
+                console.error("Erro ao registrar na blockchain: ", err);
+                return null;
+            }
+        }
+
+        // Gerar PDF consolidado com todas as evidências
+        // Gerar PDF consolidado com layout aprimorado
+        function generateConsolidatedPDF(evidencesData) {
+            return new Promise((resolve) => {
+                if (evidencesData.length === 0) {
+                    alert("Nenhuma evidência para gerar relatório.");
+                    return resolve();
+                }
+
+                // Dados comuns a todas as evidências
+                const investigationName = evidencesData[0].investigationName;
+                const responsibleName = evidencesData[0].responsibleName;
+                const institution = evidencesData[0].institution;
+                const currentDate = new Date().toLocaleDateString('pt-BR');
+                
+                // Definir as fontes
+                pdfMake.fonts = {
+                    Roboto: {
+                        normal: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf',
+                        bold: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf',
+                        italics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Italic.ttf',
+                        bolditalics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-MediumItalic.ttf'
+                    }
+                };
+
+                // Cabeçalho do relatório
+                const header = {
+                    columns: [
+                        {
+                            text: 'SELO - Sistema de Evidências com Log On-chain',
+                            fontSize: 10,
+                            color: '#666',
+                            width: '50%'
+                        },
+                        {
+                            text: `Data: ${currentDate}`,
+                            fontSize: 10,
+                            color: '#666',
+                            alignment: 'right',
+                            width: '50%'
+                        }
+                    ],
+                    margin: [40, 20, 40, 0]
+                };
+
+                // Título do relatório
+                const title = {
+                    text: 'RELATÓRIO CONSOLIDADO DE REGISTRO DE EVIDÊNCIAS',
+                    style: 'header',
+                    margin: [40, 20, 40, 10]
+                };
+
+                // Informações da investigação
+                const investigationInfo = {
+                    stack: [
+                        {
+                            text: [
+                                { text: 'INVESTIGAÇÃO: ', bold: true },
+                                investigationName
+                            ]
+                        },
+                        {
+                            text: [
+                                { text: 'RESPONSÁVEL: ', bold: true },
+                                responsibleName
+                            ],
+                            margin: [0, 5, 0, 0]
+                        },
+                        {
+                            text: [
+                                { text: 'INSTITUIÇÃO: ', bold: true },
+                                institution
+                            ],
+                            margin: [0, 5, 0, 0]
+                        },
+                        {
+                            text: [
+                                { text: 'TOTAL DE EVIDÊNCIAS: ', bold: true },
+                                evidencesData.length.toString()
+                            ],
+                            margin: [0, 5, 0, 15]
+                        }
+                    ],
+                    margin: [40, 0, 40, 10]
+                };
+
+                // Corpo da tabela
+                const tableBody = evidencesData.map((item, index) => [
+                    { text: (index + 1).toString(), alignment: 'center' },
+                    { text: item.fileName, fontSize: 9 },
+                    { text: item.hash, fontSize: 7, style: 'mono' },
+                    { 
+                        text: item.txHash.substring(0, 12) + '...' + item.txHash.substring(item.txHash.length - 6), 
+                        link: 'https://polygonscan.com/tx/' + item.txHash, 
+                        color: '#2563eb',
+                        fontSize: 8 
+                    },
+                    { text: item.date, fontSize: 8 }
+                ]);
+
+                // Tabela de evidências
+                const evidenceTable = {
+                    table: {
+                        headerRows: 1,
+                        widths: [20, '*', 100, 95, 80],
+                        body: [
+                            [
+                                { text: '#', style: 'tableHeader', alignment: 'center' },
+                                { text: 'ARQUIVO', style: 'tableHeader' },
+                                { text: 'HASH (SHA-256)', style: 'tableHeader' },
+                                { text: 'TRANSAÇÃO', style: 'tableHeader' },
+                                { text: 'DATA/HORA', style: 'tableHeader' }
+                            ],
+                            ...tableBody
+                        ]
+                    },
+                    layout: {
+                        fillColor: function(rowIndex, node, columnIndex) {
+                            return (rowIndex % 2 === 0) ? '#f8fafc' : null;
+                        },
+                        hLineWidth: function(i, node) {
+                            return (i === 0 || i === node.table.body.length) ? 1 : 0.5;
+                        },
+                        vLineWidth: function(i, node) {
+                            return 0.5;
+                        },
+                        hLineColor: function(i, node) {
+                            return '#e5e7eb';
+                        },
+                        vLineColor: function(i, node) {
+                            return '#e5e7eb';
+                        }
+                    },
+                    margin: [40, 0, 40, 20]
+                };
+
+                // Nota de rodapé
+                const footerNote = {
+                    text: 'NOTA: Este relatório contém o registro de todas as evidências submetidas através do sistema SELO. Cada evidência foi registrada na blockchain com um carimbo de data e hora imutável. Os hashes podem ser verificados recalculando o SHA-256 dos arquivos originais (desconsiderando o prefixo "0x" nas transações).',
+                    style: 'note',
+                    margin: [40, 10, 40, 20]
+                };
+
+                // Rodapé
+                const footer = {
+                    columns: [
+                        {
+                            text: '© SELO - Sistema de Evidências com Log On-chain',
+                            fontSize: 8,
+                            color: '#666',
+                            width: '50%'
+                        },
+                        {
+                            text: `Página {PAGE_NUM} de {PAGE_COUNT}`,
+                            fontSize: 8,
+                            alignment: 'right',
+                            width: '50%'
+                        }
+                    ],
+                    margin: [40, 20, 40, 0]
+                };
+
+                // Definição completa do documento
+                const docDefinition = {
+                    pageSize: 'A4',
+                    pageMargins: [40, 60, 40, 60],
+                    header: function(currentPage) {
+                        if (currentPage > 1) {
+                            return {
+                                text: `Relatório: ${investigationName} - Página ${currentPage}`,
+                                fontSize: 9,
+                                color: '#666',
+                                margin: [40, 20, 40, 0]
+                            };
+                        }
+                        return null;
+                    },
+                    footer: function(currentPage, pageCount) {
+                        return [
+                            {
+                                canvas: [{ type: 'line', x1: 40, y1: 0, x2: 555, y2: 0, lineWidth: 0.5, lineColor: '#e5e7eb' }],
+                                margin: [0, 10]
+                            },
+                            footer
+                        ];
+                    },
+                    content: [
+                        header,
+                        title,
+                        investigationInfo,
+                        evidenceTable,
+                        footerNote
+                    ],
+                    styles: {
+                        header: {
+                            fontSize: 14,
+                            bold: true,
+                            alignment: 'center',
+                            color: '#1e293b'
+                        },
+                        mono: {
+                            font: 'Roboto',
+                            color: '#4b5563'
+                        },
+                        note: {
+                            fontSize: 8,
+                            color: '#6b7280',
+                            italics: true
+                        },
+                        tableHeader: {
+                            bold: true,
+                            fontSize: 9,
+                            color: '#1e293b',
+                            fillColor: '#e5e7eb'
+                        }
+                    },
+                    defaultStyle: {
+                        font: 'Roboto',
+                        fontSize: 10,
+                        color: '#1e293b'
+                    }
+                };
+                
+                const fileName = `Relatório_${investigationName.replace(/[^a-z0-9]/gi, '_')}_${formatDate(new Date())}.pdf`;
+                const pdfDoc = pdfMake.createPdf(docDefinition);
+                
+                pdfDoc.getBlob(function(blob) {
+                    saveAs(blob, fileName);
+                    resolve();
+                });
+            });
+        }
+
     </script>
 </body>
 </html>
