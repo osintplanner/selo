@@ -1,401 +1,13 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SELO - Registro de Evidências</title>
-    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.70/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.70/vfs_fonts.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --secondary: #10b981;
-            --dark: #1e293b;
-            --darker: #0f172a;
-            --light: #f8fafc;
-            --gray: #94a3b8;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --border-radius: 12px;
-            --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
+from pathlib import Path
+import re
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+src = Path("/mnt/data/SELO_corrigido.html")
+dst = Path("/mnt/data/SELO_corrigido_confirmacao.html")
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--darker), var(--dark));
-            color: var(--light);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem 1rem;
-            line-height: 1.6;
-        }
+text = src.read_text(encoding="utf-8")
 
-        .container {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 2.5rem;
-        }
-
-        .logo {
-            width: 200px;
-            height: 200px;
-            margin-bottom: -2rem;
-            filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.4));
-        }
-
-        h1, h2, h3, h4 {
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: white;
-        }
-
-        h1 {
-            font-size: 2rem;
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 0.5rem;
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            color: var(--light);
-        }
-
-        h3 {
-            font-size: 1.25rem;
-            color: var(--gray);
-            margin-top: 1.5rem;
-        }
-
-        h4 {
-            font-size: 1.1rem;
-            color: var(--light);
-            margin-bottom: 0.5rem;
-        }
-
-        .subtitle {
-            color: var(--gray);
-            margin-bottom: 2rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--border-radius);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--box-shadow);
-        }
-
-        .wallet-info {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .wallet-status {
-            font-weight: 500;
-            color: var(--secondary);
-        }
-
-        .wallet-address {
-            font-family: 'Roboto Mono', monospace;
-            background: rgba(16, 185, 129, 0.1);
-            padding: 0.5rem 1rem;
-            border-radius: 999px;
-            font-size: 0.9rem;
-            color: var(--secondary);
-        }
-
-        button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--border-radius);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 1rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        button:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        button.secondary {
-            background-color: transparent;
-            border: 1px solid var(--gray);
-            color: var(--gray);
-        }
-
-        button.secondary:hover {
-            background-color: rgba(148, 163, 184, 0.1);
-            color: white;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        label {
-            font-weight: 500;
-            color: var(--gray);
-            font-size: 0.95rem;
-        }
-
-        input[type="text"],
-        input[type="file"] {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 0.75rem 1rem;
-            border-radius: var(--border-radius);
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s ease;
-            width: 100%;
-        }
-
-        input[type="text"]:focus,
-        input[type="file"]:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
-        }
-
-        input[type="file"] {
-            padding: 0.5rem;
-        }
-
-        input[type="file"]::file-selector-button {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            margin-right: 1rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        input[type="file"]::file-selector-button:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .footer {
-            margin-top: 3rem;
-            text-align: center;
-            color: var(--gray);
-            font-size: 0.9rem;
-        }
-
-        /* Modal styles */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(15, 23, 42, 0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 1rem;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .modal.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .modal-content {
-            background: var(--dark);
-            border-radius: var(--border-radius);
-            padding: 2rem;
-            max-width: 500px;
-            width: 100%;
-            box-shadow: var(--box-shadow);
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            color: var(--gray);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.25rem;
-        }
-
-        .modal-close:hover {
-            color: white;
-        }
-
-        /* Evidence list styles */
-        .evidence-list-container {
-            margin-top: 1.5rem;
-            display: none;
-        }
-
-        .evidence-list {
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--border-radius);
-            padding: 1rem;
-            max-height: 200px;
-            overflow-y: auto;
-            margin-bottom: 1rem;
-        }
-
-        .evidence-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 0.75rem;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .evidence-item span {
-            font-family: 'Roboto Mono', monospace;
-            font-size: 0.85rem;
-        }
-
-        .remove-evidence {
-            color: #ef4444;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-        }
-
-        /* Actions container */
-        .actions-container {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-            justify-content: flex-end;
-        }
-
-        .finish-button {
-            background-color: var(--secondary);
-        }
-
-        .finish-button:hover {
-            background-color: #0da271;
-        }
-
-        .clear-button {
-            background-color: #ef4444;
-        }
-
-        .clear-button:hover {
-            background-color: #dc2626;
-        }
-
-        /* Animation */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .animate-spin {
-            animation: spin 1s linear infinite;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 0 1rem;
-            }
-            
-            .card {
-                padding: 1.5rem;
-            }
-            
-            h1 {
-                font-size: 1.75rem;
-            }
-            
-            h2 {
-                font-size: 1.25rem;
-            }
-
-            .actions-container {
-                flex-direction: column;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <img src="logo.png" alt="SELO Logo" class="logo">
-            <h1>SELO</h1>
-            <h2>Sistema de Evidências com Log On-chain</h2>
-            <p class="subtitle">Registro imutável de evidências em blockchain com carimbo de data e hora verificável</p>
-        </header>
-
-        <div class="card">
-            <div class="wallet-info">
-                <div id="wallet-status" class="wallet-status">Carteira não conectada</div>
-                <div id="wallet-address" class="wallet-address"></div>
-            </div>
-            <button onclick="connectWallet()">
+# 1. Adiciona uma área de status da rede e da transação logo abaixo da carteira.
+needle = '''            <button onclick="connectWallet()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/>
                     <path d="M16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" stroke="currentColor" stroke-width="2"/>
@@ -406,275 +18,114 @@
                 </svg>
                 Conectar Carteira
             </button>
-        </div>
+'''
+replacement = needle + '''
+            <div id="network-info" style="margin-top: 1rem; text-align: center; color: var(--gray); font-size: 0.9rem;"></div>
+            <div id="tx-status" style="margin-top: 0.75rem; text-align: center; font-size: 0.9rem;"></div>
+'''
+if needle in text:
+    text = text.replace(needle, replacement, 1)
 
-        <div class="card">
-            <h3>Cadastro de Evidências</h3>
-            <form id="evidence-form">
-                <div class="form-group">
-                    <label for="investigation-name">Nome da Investigação</label>
-                    <input type="text" id="investigation-name" required placeholder="Ex: Caso 12345">
-                </div>
-                
-                <div class="form-group">
-                    <label for="responsible-name">Nome do Responsável</label>
-                    <input type="text" id="responsible-name" required placeholder="Seu nome completo">
-                </div>
-                
-                <div class="form-group">
-                    <label for="institution">Instituição</label>
-                    <input type="text" id="institution" required placeholder="Sua organização">
-                </div>
-                
-                <div class="form-group">
-                    <label for="file-upload">Arquivo de Evidência</label>
-                    <input type="file" id="file-upload" required>
-                </div>
-                
-                <button type="button" onclick="addEvidence()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 6V18M6 12H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    Adicionar Evidência
-                </button>
-            </form>
+# 2. Substitui a função connectWallet para também exibir rede e chainId.
+start = text.index('        async function connectWallet() {')
+end = text.index('\n        function calculateHash(file)', start)
 
-            <div class="evidence-list-container" id="evidence-list-container">
-                <h4>Evidências Adicionadas</h4>
-                <div class="evidence-list" id="evidence-list">
-                    <!-- Itens serão adicionados dinamicamente aqui -->
-                </div>
-                
-                <div class="actions-container" id="actions-container">
-                    <button class="finish-button" onclick="registerAllEvidences()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        Registrar Tudo
-                    </button>
-                    <button class="clear-button secondary" onclick="clearAllEvidences()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M19 7L7 19M7 7L19 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                        Limpar Tudo
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>Sistema de registro imutável de evidências em blockchain</p>
-            <p>© 2025 SELO - Vytautas Zumas</p>
-        </div>
-    </div>
-
-    <!-- Welcome Modal -->
-    <div class="modal" id="welcome-modal">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()">&times;</button>
-            <h3>Bem-vindo ao SELO</h3>
-            <p style="margin-bottom: 1rem;">A importância de utilizar uma base de dados descentralizada e imutável como a blockchain reside na garantia de integridade das informações. O registro da evidência com um carimbo de data e hora imutável permite comprovar que o arquivo não foi alterado, garantindo que a marca temporal registrada na blockchain representa o momento exato do processamento da evidência, sem possibilidade de manipulação.</p>
-            <p style="margin-bottom: 1.5rem;"><strong>Importante:</strong> Nenhuma informação do arquivo será processada ou armazenada, apenas o hash criptográfico do conteúdo.</p>
-            <p style="font-style: italic; color: var(--gray);">Vytautas Zumas</p>
-            <button onclick="closeModal()" style="margin-top: 1.5rem; width: 100%;">Entendi</button>
-        </div>
-    </div>
-
-    <script>
-        // Variáveis globais
-        let web3;
-        let connectedAddress;
-        let evidences = []; // Array para armazenar múltiplas evidências
-        let registerButtonOriginalHTML = '';
-
-        // Modal functions
-        function showModal() {
-            document.getElementById('welcome-modal').classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('welcome-modal').classList.remove('active');
-        }
-
-        // Show modal on first visit
-        document.addEventListener('DOMContentLoaded', function() {
-            // Salvar o HTML original do botão de registro
-            const btn = document.querySelector('#evidence-form button');
-            registerButtonOriginalHTML = btn.innerHTML;
-            
-            if (!localStorage.getItem('seloModalShown')) {
-                showModal();
-                localStorage.setItem('seloModalShown', 'true');
-            }
-        });
-
-        // Wallet connection
-        async function connectWallet() {
+new_connect = r'''        async function connectWallet() {
             if (window.ethereum) {
                 try {
                     web3 = new Web3(window.ethereum);
-                    await ethereum.request({ method: 'eth_requestAccounts' });
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+
                     const accounts = await web3.eth.getAccounts();
                     connectedAddress = accounts[0];
+
                     document.getElementById("wallet-status").innerText = "Carteira Conectada";
-                    document.getElementById("wallet-address").innerText = connectedAddress.slice(0, 6) + "..." + connectedAddress.slice(-4);
-                    
-                    // Add network change handler
-                    window.ethereum.on('chainChanged', (chainId) => {
-                        window.location.reload();
+                    document.getElementById("wallet-address").innerText =
+                        connectedAddress.slice(0, 6) + "..." + connectedAddress.slice(-4);
+
+                    await updateNetworkInfo();
+
+                    window.ethereum.on('chainChanged', async () => {
+                        await updateNetworkInfo();
                     });
-                    
-                    // Add account change handler
-                    window.ethereum.on('accountsChanged', (accounts) => {
+
+                    window.ethereum.on('accountsChanged', async (accounts) => {
                         if (accounts.length === 0) {
-                            // Wallet disconnected
                             document.getElementById("wallet-status").innerText = "Carteira não conectada";
                             document.getElementById("wallet-address").innerText = "";
+                            document.getElementById("network-info").innerText = "";
                             connectedAddress = null;
                         } else {
-                            // Account changed
                             connectedAddress = accounts[0];
-                            document.getElementById("wallet-address").innerText = connectedAddress.slice(0, 6) + "..." + connectedAddress.slice(-4);
+                            document.getElementById("wallet-address").innerText =
+                                connectedAddress.slice(0, 6) + "..." + connectedAddress.slice(-4);
+                            await updateNetworkInfo();
                         }
                     });
+
                 } catch (err) {
-                    alert("Erro ao conectar: " + err.message);
+                    alert("Erro ao conectar: " + (err?.message || err));
                 }
             } else {
-                alert("Por favor, instale o Metamask ou Rabby Wallet para continuar.");
+                alert("Por favor, instale uma carteira EVM compatível, como MetaMask ou Rabby.");
             }
         }
 
-        function calculateHash(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const wordArray = CryptoJS.lib.WordArray.create(event.target.result);
-                    const hash = CryptoJS.SHA256(wordArray).toString();
-                    resolve(hash);
-                };
-                reader.onerror = function(error) {
-                    reject(error);
-                };
-                reader.readAsArrayBuffer(file);
-            });
+        async function updateNetworkInfo() {
+            if (!web3) return;
+
+            const chainId = Number(await web3.eth.getChainId());
+            const network = getNetworkConfig(chainId);
+
+            document.getElementById("network-info").innerText =
+                `Rede: ${network.name} | Chain ID: ${chainId}`;
         }
 
-        function formatDate(date) {
-            const day = String(date.getDate()).padStart(2, '0');
-            const monthNames = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-            const month = monthNames[date.getMonth()];
-            const year = String(date.getFullYear()).slice(-2);
-            return `${day}${month}${year}`;
-        }
-
-        // Função para adicionar nova evidência à lista
-        async function addEvidence() {
-            if (!connectedAddress) {
-                alert("Por favor, conecte sua carteira primeiro.");
-                return;
-            }
-
-            const investigationName = document.getElementById("investigation-name").value;
-            const responsibleName = document.getElementById("responsible-name").value;
-            const institution = document.getElementById("institution").value;
-            const fileInput = document.getElementById("file-upload").files[0];
-            
-            if (!fileInput) {
-                alert("Selecione um arquivo.");
-                return;
-            }
-
-            // Validate form
-            if (!investigationName || !responsibleName || !institution) {
-                alert("Por favor, preencha todos os campos.");
-                return;
-            }
-
-            const btn = document.querySelector('#evidence-form button');
-            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-spin"><path d="M12 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 18V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4.93 4.93L7.76 7.76" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.24 16.24L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 12H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4.93 19.07L7.76 16.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.24 7.76L19.07 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Processando...';
-            btn.disabled = true;
-
-            try {
-                const fileName = fileInput.name;
-                const hash = await calculateHash(fileInput);
-                
-                // Adicionar à lista de evidências (registro na blockchain será feito depois)
-                evidences.push({
-                    investigationName,
-                    responsibleName,
-                    institution,
-                    fileName,
-                    hash,
-                    file: fileInput
-                });
-
-                // Atualizar a lista visual
-                updateEvidenceList();
-                
-                // Limpar apenas o campo de arquivo
-                document.getElementById("file-upload").value = '';
-                
-                // Mostrar lista e ações
-                document.getElementById('evidence-list-container').style.display = 'block';
-            } catch (err) {
-                alert("Erro ao calcular hash: " + err.message);
-            } finally {
-                // Restaurar botão
-                btn.innerHTML = registerButtonOriginalHTML;
-                btn.disabled = false;
-            }
-        }
-
-        // Atualizar a lista visual de evidências
-        function updateEvidenceList() {
-            const listContainer = document.getElementById('evidence-list');
-            // Limpar lista existente
-            listContainer.innerHTML = '';
-            
-            // Adicionar cada evidência
-            evidences.forEach((evidence, index) => {
-                const item = document.createElement('div');
-                item.className = 'evidence-item';
-                item.innerHTML = `
-                    <span>${evidence.fileName} (${evidence.hash.substring(0, 8)}...)</span>
-                    <button class="remove-evidence" onclick="removeEvidence(${index})" title="Remover evidência">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                `;
-                listContainer.appendChild(item);
-            });
-        }
-
-        // Remover evidência da lista
-        function removeEvidence(index) {
-            if (confirm("Remover esta evidência da lista?")) {
-                evidences.splice(index, 1);
-                updateEvidenceList();
-                
-                // Se não houver mais evidências, esconder a lista
-                if (evidences.length === 0) {
-                    document.getElementById('evidence-list-container').style.display = 'none';
+        function getNetworkConfig(chainId) {
+            const networks = {
+                1: {
+                    name: "Ethereum",
+                    explorer: "https://etherscan.io/tx/"
+                },
+                10: {
+                    name: "Optimism",
+                    explorer: "https://optimistic.etherscan.io/tx/"
+                },
+                56: {
+                    name: "BNB Smart Chain",
+                    explorer: "https://bscscan.com/tx/"
+                },
+                137: {
+                    name: "Polygon",
+                    explorer: "https://polygonscan.com/tx/"
+                },
+                8453: {
+                    name: "Base",
+                    explorer: "https://basescan.org/tx/"
+                },
+                42161: {
+                    name: "Arbitrum One",
+                    explorer: "https://arbiscan.io/tx/"
+                },
+                43114: {
+                    name: "Avalanche C Chain",
+                    explorer: "https://snowtrace.io/tx/"
                 }
-            }
-        }
+            };
 
-        // Limpar todas as evidências
-        function clearAllEvidences() {
-            if (evidences.length === 0) return;
-            
-            if (confirm("Tem certeza que deseja limpar todas as evidências adicionadas?")) {
-                evidences = [];
-                document.getElementById('evidence-list-container').style.display = 'none';
-                document.getElementById("file-upload").value = '';
-                updateEvidenceList();
-            }
+            return networks[chainId] || {
+                name: `Rede EVM ${chainId}`,
+                explorer: null
+            };
         }
+'''
+text = text[:start] + new_connect + text[end:]
 
-        // Registrar todas as evidências na blockchain e gerar relatório
-        async function registerAllEvidences() {
+# 3. Substitui o fluxo de registro de todas as evidências.
+start = text.index('        async function registerAllEvidences() {')
+end = text.index('\n        // Função para registrar um hash na blockchain', start)
+
+new_register_all = r'''        async function registerAllEvidences() {
             if (evidences.length === 0) {
                 alert("Adicione pelo menos uma evidência antes de registrar.");
                 return;
@@ -687,199 +138,322 @@
 
             const btn = document.querySelector('.finish-button');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-spin"><path d="M12 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 18V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4.93 4.93L7.76 7.76" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.24 16.24L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 12H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4.93 19.07L7.76 16.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.24 7.76L19.07 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Registrando...';
+
+            btn.innerHTML =
+                '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-spin"><path d="M12 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 18V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4.93 4.93L7.76 7.76" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.24 16.24L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 12H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4.93 19.07L7.76 16.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.24 7.76L19.07 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Registrando...';
+
             btn.disabled = true;
 
+            const registeredEvidences = [];
+
             try {
-                // Registrar cada hash na blockchain
-                const registeredEvidences = [];
-                
-                for (const evidence of evidences) {
+                for (let i = 0; i < evidences.length; i++) {
+                    const evidence = evidences[i];
+
+                    setTransactionStatus(
+                        `Registrando evidência ${i + 1} de ${evidences.length}...`,
+                        "pending"
+                    );
+
                     const result = await registerHashOnChain(evidence.hash);
-                    if (result) {
-                        registeredEvidences.push({
-                            ...evidence,
-                            txHash: result.txHash,
-                            date: result.date
-                        });
-                    }
+
+                    registeredEvidences.push({
+                        ...evidence,
+                        txHash: result.txHash,
+                        date: result.date,
+                        status: result.status,
+                        blockNumber: result.blockNumber,
+                        chainId: result.chainId,
+                        networkName: result.networkName,
+                        explorerUrl: result.explorerUrl
+                    });
                 }
 
-                if (registeredEvidences.length > 0) {
-                    // Gerar relatório consolidado
-                    await generateConsolidatedPDF(registeredEvidences);
-                    
-                    // Mostrar mensagem de sucesso
-                    alert(`${registeredEvidences.length} evidência(s) registrada(s) com sucesso na blockchain!`);
-                    
-                    // Limpar tudo após sucesso
-                    clearAllEvidences();
+                const hasPending = registeredEvidences.some(item => item.status === "pending");
+
+                await generateConsolidatedPDF(registeredEvidences);
+
+                if (hasPending) {
+                    setTransactionStatus(
+                        "Registro transmitido. Uma ou mais transações ainda aguardam confirmação.",
+                        "pending"
+                    );
+
+                    alert(
+                        "As transações foram transmitidas. Uma ou mais ainda aguardam confirmação. O relatório foi gerado com o status atual."
+                    );
+                } else {
+                    setTransactionStatus(
+                        "Todas as evidências foram confirmadas na blockchain.",
+                        "confirmed"
+                    );
+
+                    alert(
+                        `${registeredEvidences.length} evidência(s) registrada(s) e confirmada(s) com sucesso na blockchain.`
+                    );
                 }
+
+                evidences = [];
+                document.getElementById('evidence-list-container').style.display = 'none';
+                document.getElementById("file-upload").value = '';
+                updateEvidenceList();
+
             } catch (err) {
-                alert("Ocorreu um erro durante o registro: " + err.message);
+                console.error("Erro durante o registro:", err);
+
+                setTransactionStatus(
+                    "Falha no registro. Verifique a mensagem apresentada.",
+                    "error"
+                );
+
+                alert("Ocorreu um erro durante o registro: " + (err?.message || err));
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         }
 
-        // Função para registrar um hash na blockchain
-        async function registerHashOnChain(hash) {
-            try {
-                if (!web3) {
-                    throw new Error("Web3 não inicializado. Conecte a carteira primeiro.");
-                }
+        function setTransactionStatus(message, status) {
+            const element = document.getElementById("tx-status");
 
-                const accounts = await web3.eth.getAccounts();
+            if (!element) return;
 
-                if (!accounts || accounts.length === 0) {
-                    throw new Error("Nenhuma conta disponível na carteira.");
-                }
+            element.innerText = message;
 
-                const from = accounts[0];
-
-                /*
-                 * IMPORTANTE:
-                 * Algumas redes EVM rejeitam transações em que from === to
-                 * quando a transação contém dados.
-                 *
-                 * O hash continua sendo gravado integralmente no campo input
-                 * da transação, mas a transação é enviada para um endereço
-                 * neutro em vez de ser enviada para a própria carteira.
-                 *
-                 * Nenhum ativo é transferido, pois value = 0.
-                 */
-                const anchorAddress = "0x000000000000000000000000000000000000dEaD";
-
-                const data = hash.startsWith("0x") ? hash : "0x" + hash;
-
-                if (!/^0x[0-9a-fA-F]{64}$/.test(data)) {
-                    throw new Error("Hash SHA-256 inválido.");
-                }
-
-                const tx = {
-                    from: from,
-                    to: anchorAddress,
-                    value: "0x0",
-                    data: data
-                };
-
-                // Estimar o gas de acordo com a rede atual.
-                const estimatedGas = await web3.eth.estimateGas(tx);
-
-                // Margem adicional de 20 por cento para evitar insuficiência
-                // causada por pequenas diferenças entre estimativa e execução.
-                tx.gas = Math.ceil(Number(estimatedGas) * 1.20);
-
-                const receipt = await web3.eth.sendTransaction(tx);
-
-                return {
-                    txHash: receipt.transactionHash,
-                    date: new Date().toLocaleString("pt-BR", {
-                        timeZone: "America/Sao_Paulo"
-                    })
-                };
-
-            } catch (err) {
-                console.error("Erro ao registrar na blockchain:", err);
-
-                const message =
-                    err?.message ||
-                    err?.data?.message ||
-                    "Erro desconhecido ao registrar a evidência.";
-
-                throw new Error(message);
+            if (status === "confirmed") {
+                element.style.color = "#10b981";
+            } else if (status === "error") {
+                element.style.color = "#ef4444";
+            } else {
+                element.style.color = "#f59e0b";
             }
         }
+'''
+text = text[:start] + new_register_all + text[end:]
 
-        // Gerar PDF consolidado com todas as evidências
-        // Gerar PDF consolidado com layout aprimorado
-        function generateConsolidatedPDF(evidencesData) {
-            return new Promise((resolve) => {
-                if (evidencesData.length === 0) {
-                    alert("Nenhuma evidência para gerar relatório.");
-                    return resolve();
-                }
+# 4. Substitui a função registerHashOnChain por uma implementação que separa envio de confirmação.
+start = text.index('        async function registerHashOnChain(hash) {')
+end = text.index('\n        // Gerar PDF consolidado', start)
 
-                // Dados comuns a todas as evidências
-                const investigationName = evidencesData[0].investigationName;
-                const responsibleName = evidencesData[0].responsibleName;
-                const institution = evidencesData[0].institution;
-                const currentDate = new Date().toLocaleDateString('pt-BR');
-                
-                // Definir as fontes
-                pdfMake.fonts = {
-                    Roboto: {
-                        normal: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf',
-                        bold: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf',
-                        italics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Italic.ttf',
-                        bolditalics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-MediumItalic.ttf'
+new_register_hash = r'''        async function registerHashOnChain(hash) {
+            if (!web3) {
+                throw new Error("Web3 não inicializado. Conecte a carteira primeiro.");
+            }
+
+            const accounts = await web3.eth.getAccounts();
+
+            if (!accounts || accounts.length === 0) {
+                throw new Error("Nenhuma conta disponível na carteira.");
+            }
+
+            const from = accounts[0];
+            const chainId = Number(await web3.eth.getChainId());
+            const network = getNetworkConfig(chainId);
+
+            const anchorAddress = "0x000000000000000000000000000000000000dEaD";
+            const data = hash.startsWith("0x") ? hash : "0x" + hash;
+
+            if (!/^0x[0-9a-fA-F]{64}$/.test(data)) {
+                throw new Error("Hash SHA256 inválido.");
+            }
+
+            const tx = {
+                from,
+                to: anchorAddress,
+                value: "0x0",
+                data
+            };
+
+            try {
+                const estimatedGas = await web3.eth.estimateGas(tx);
+                tx.gas = Math.ceil(Number(estimatedGas) * 1.20);
+            } catch (gasError) {
+                console.warn("Não foi possível estimar o gas automaticamente.", gasError);
+                tx.gas = 60000;
+            }
+
+            const date = new Date().toLocaleString("pt-BR", {
+                timeZone: "America/Sao_Paulo"
+            });
+
+            let transactionHash = null;
+            let receiptResolved = false;
+
+            const promiEvent = web3.eth.sendTransaction(tx);
+
+            return await new Promise((resolve, reject) => {
+                promiEvent.once("transactionHash", async (txHash) => {
+                    transactionHash = txHash;
+
+                    setTransactionStatus(
+                        `Transação enviada. Aguardando confirmação: ${txHash}`,
+                        "pending"
+                    );
+
+                    /*
+                     * O Web3 pode lançar timeout após determinado número de blocos.
+                     * Como o hash da transação já foi recebido, isso não significa
+                     * necessariamente que a transação falhou.
+                     */
+                    setTimeout(async () => {
+                        if (receiptResolved || !transactionHash) return;
+
+                        try {
+                            const receipt = await web3.eth.getTransactionReceipt(transactionHash);
+
+                            if (receipt) {
+                                receiptResolved = true;
+
+                                const confirmed =
+                                    receipt.status === true ||
+                                    receipt.status === "0x1" ||
+                                    receipt.status === 1n ||
+                                    receipt.status === 1;
+
+                                if (!confirmed) {
+                                    reject(new Error(
+                                        `A transação ${transactionHash} foi incluída em bloco, mas foi revertida.`
+                                    ));
+                                    return;
+                                }
+
+                                resolve({
+                                    txHash: transactionHash,
+                                    blockNumber: receipt.blockNumber,
+                                    status: "confirmed",
+                                    chainId,
+                                    networkName: network.name,
+                                    explorerUrl: network.explorer
+                                        ? network.explorer + transactionHash
+                                        : null,
+                                    date
+                                });
+                            }
+                        } catch (pollError) {
+                            console.warn("Falha ao consultar receipt:", pollError);
+                        }
+                    }, 15000);
+                });
+
+                promiEvent.once("receipt", (receipt) => {
+                    if (receiptResolved) return;
+
+                    receiptResolved = true;
+
+                    const confirmed =
+                        receipt.status === true ||
+                        receipt.status === "0x1" ||
+                        receipt.status === 1n ||
+                        receipt.status === 1;
+
+                    if (!confirmed) {
+                        reject(new Error(
+                            `A transação ${receipt.transactionHash} foi revertida pela blockchain.`
+                        ));
+                        return;
                     }
-                };
 
-                // Cabeçalho do relatório
-                const header = {
-                    columns: [
-                        {
-                            text: 'SELO - Sistema de Evidências com Log On-chain',
-                            fontSize: 10,
-                            color: '#666',
-                            width: '50%'
-                        },
-                        {
-                            text: `Data: ${currentDate}`,
-                            fontSize: 10,
-                            color: '#666',
-                            alignment: 'right',
-                            width: '50%'
+                    setTransactionStatus(
+                        `Transação confirmada no bloco ${receipt.blockNumber}.`,
+                        "confirmed"
+                    );
+
+                    resolve({
+                        txHash: receipt.transactionHash,
+                        blockNumber: receipt.blockNumber,
+                        status: "confirmed",
+                        chainId,
+                        networkName: network.name,
+                        explorerUrl: network.explorer
+                            ? network.explorer + receipt.transactionHash
+                            : null,
+                        date
+                    });
+                });
+
+                promiEvent.once("error", async (error) => {
+                    if (receiptResolved) return;
+
+                    if (transactionHash) {
+                        try {
+                            const receipt =
+                                await web3.eth.getTransactionReceipt(transactionHash);
+
+                            if (receipt) {
+                                receiptResolved = true;
+
+                                const confirmed =
+                                    receipt.status === true ||
+                                    receipt.status === "0x1" ||
+                                    receipt.status === 1n ||
+                                    receipt.status === 1;
+
+                                if (!confirmed) {
+                                    reject(new Error(
+                                        `A transação ${transactionHash} foi incluída em bloco, mas foi revertida.`
+                                    ));
+                                    return;
+                                }
+
+                                resolve({
+                                    txHash: transactionHash,
+                                    blockNumber: receipt.blockNumber,
+                                    status: "confirmed",
+                                    chainId,
+                                    networkName: network.name,
+                                    explorerUrl: network.explorer
+                                        ? network.explorer + transactionHash
+                                        : null,
+                                    date
+                                });
+
+                                return;
+                            }
+                        } catch (receiptError) {
+                            console.warn(
+                                "Não foi possível consultar o receipt após o erro do Web3.",
+                                receiptError
+                            );
                         }
-                    ],
-                    margin: [40, 20, 40, 0]
-                };
 
-                // Título do relatório
-                const title = {
-                    text: 'RELATÓRIO CONSOLIDADO DE REGISTRO DE EVIDÊNCIAS',
-                    style: 'header',
-                    margin: [40, 20, 40, 10]
-                };
+                        receiptResolved = true;
 
-                // Informações da investigação
-                const investigationInfo = {
-                    stack: [
-                        {
-                            text: [
-                                { text: 'INVESTIGAÇÃO: ', bold: true },
-                                investigationName
-                            ]
-                        },
-                        {
-                            text: [
-                                { text: 'RESPONSÁVEL: ', bold: true },
-                                responsibleName
-                            ],
-                            margin: [0, 5, 0, 0]
-                        },
-                        {
-                            text: [
-                                { text: 'INSTITUIÇÃO: ', bold: true },
-                                institution
-                            ],
-                            margin: [0, 5, 0, 0]
-                        },
-                        {
-                            text: [
-                                { text: 'TOTAL DE EVIDÊNCIAS: ', bold: true },
-                                evidencesData.length.toString()
-                            ],
-                            margin: [0, 5, 0, 15]
-                        }
-                    ],
-                    margin: [40, 0, 40, 10]
-                };
+                        setTransactionStatus(
+                            `Transação enviada, ainda sem confirmação: ${transactionHash}`,
+                            "pending"
+                        );
 
-                // Corpo da tabela
-                const tableBody = evidencesData.map((item, index) => [
+                        resolve({
+                            txHash: transactionHash,
+                            blockNumber: null,
+                            status: "pending",
+                            chainId,
+                            networkName: network.name,
+                            explorerUrl: network.explorer
+                                ? network.explorer + transactionHash
+                                : null,
+                            date
+                        });
+
+                        return;
+                    }
+
+                    receiptResolved = true;
+
+                    const message =
+                        error?.message ||
+                        error?.data?.message ||
+                        "Erro desconhecido ao enviar a transação.";
+
+                    reject(new Error(message));
+                });
+            });
+        }
+'''
+text = text[:start] + new_register_hash + text[end:]
+
+# 5. Ajusta a tabela do PDF para usar a rede correta, o explorador correto e o status.
+old_table_body = '''                const tableBody = evidencesData.map((item, index) => [
                     { text: (index + 1).toString(), alignment: 'center' },
                     { text: item.fileName, fontSize: 9 },
                     { text: item.hash, fontSize: 7, style: 'mono' },
@@ -890,141 +464,68 @@
                         fontSize: 8 
                     },
                     { text: item.date, fontSize: 8 }
-                ]);
+                ]);'''
 
-                // Tabela de evidências
-                const evidenceTable = {
-                    table: {
-                        headerRows: 1,
-                        widths: [20, '*', 100, 95, 80],
-                        body: [
-                            [
-                                { text: '#', style: 'tableHeader', alignment: 'center' },
-                                { text: 'ARQUIVO', style: 'tableHeader' },
-                                { text: 'HASH (SHA-256)', style: 'tableHeader' },
-                                { text: 'TRANSAÇÃO', style: 'tableHeader' },
-                                { text: 'DATA/HORA', style: 'tableHeader' }
-                            ],
-                            ...tableBody
-                        ]
+new_table_body = '''                const tableBody = evidencesData.map((item, index) => [
+                    { text: (index + 1).toString(), alignment: 'center' },
+                    { text: item.fileName, fontSize: 9 },
+                    { text: item.hash, fontSize: 7, style: 'mono' },
+                    {
+                        text: item.txHash.substring(0, 12) + '...' + item.txHash.substring(item.txHash.length - 6),
+                        link: item.explorerUrl || undefined,
+                        color: item.explorerUrl ? '#2563eb' : '#1e293b',
+                        fontSize: 8
                     },
-                    layout: {
-                        fillColor: function(rowIndex, node, columnIndex) {
-                            return (rowIndex % 2 === 0) ? '#f8fafc' : null;
-                        },
-                        hLineWidth: function(i, node) {
-                            return (i === 0 || i === node.table.body.length) ? 1 : 0.5;
-                        },
-                        vLineWidth: function(i, node) {
-                            return 0.5;
-                        },
-                        hLineColor: function(i, node) {
-                            return '#e5e7eb';
-                        },
-                        vLineColor: function(i, node) {
-                            return '#e5e7eb';
-                        }
+                    {
+                        text:
+                            `${item.networkName} (${item.chainId})\\n` +
+                            `${item.status === "confirmed" ? "Confirmada" : "Pendente"}` +
+                            `${item.blockNumber !== null && item.blockNumber !== undefined ? "\\nBloco " + item.blockNumber : ""}`,
+                        fontSize: 7
                     },
-                    margin: [40, 0, 40, 20]
-                };
+                    { text: item.date, fontSize: 8 }
+                ]);'''
 
-                // Nota de rodapé
-                const footerNote = {
-                    text: 'NOTA: Este relatório contém o registro de todas as evidências submetidas através do sistema SELO. Cada evidência foi registrada na blockchain com um carimbo de data e hora imutável. Os hashes podem ser verificados recalculando o SHA-256 dos arquivos originais (desconsiderando o prefixo "0x" nas transações).',
-                    style: 'note',
-                    margin: [40, 10, 40, 20]
-                };
+if old_table_body not in text:
+    raise RuntimeError("Trecho da tabela do PDF não encontrado.")
+text = text.replace(old_table_body, new_table_body, 1)
 
-                // Rodapé
-                const footer = {
-                    columns: [
-                        {
-                            text: '© SELO - Sistema de Evidências com Log On-chain',
-                            fontSize: 8,
-                            color: '#666',
-                            width: '50%'
-                        },
-                        {
-                            text: `Página {PAGE_NUM} de {PAGE_COUNT}`,
-                            fontSize: 8,
-                            alignment: 'right',
-                            width: '50%'
-                        }
-                    ],
-                    margin: [40, 20, 40, 0]
-                };
+text = text.replace(
+    "widths: [20, '*', 100, 95, 80],",
+    "widths: [18, '*', 90, 85, 80, 72],",
+    1
+)
 
-                // Definição completa do documento
-                const docDefinition = {
-                    pageSize: 'A4',
-                    pageMargins: [40, 60, 40, 60],
-                    header: function(currentPage) {
-                        if (currentPage > 1) {
-                            return {
-                                text: `Relatório: ${investigationName} - Página ${currentPage}`,
-                                fontSize: 9,
-                                color: '#666',
-                                margin: [40, 20, 40, 0]
-                            };
-                        }
-                        return null;
-                    },
-                    footer: function(currentPage, pageCount) {
-                        return [
-                            {
-                                canvas: [{ type: 'line', x1: 40, y1: 0, x2: 555, y2: 0, lineWidth: 0.5, lineColor: '#e5e7eb' }],
-                                margin: [0, 10]
-                            },
-                            footer
-                        ];
-                    },
-                    content: [
-                        header,
-                        title,
-                        investigationInfo,
-                        evidenceTable,
-                        footerNote
-                    ],
-                    styles: {
-                        header: {
-                            fontSize: 14,
-                            bold: true,
-                            alignment: 'center',
-                            color: '#1e293b'
-                        },
-                        mono: {
-                            font: 'Roboto',
-                            color: '#4b5563'
-                        },
-                        note: {
-                            fontSize: 8,
-                            color: '#6b7280',
-                            italics: true
-                        },
-                        tableHeader: {
-                            bold: true,
-                            fontSize: 9,
-                            color: '#1e293b',
-                            fillColor: '#e5e7eb'
-                        }
-                    },
-                    defaultStyle: {
-                        font: 'Roboto',
-                        fontSize: 10,
-                        color: '#1e293b'
-                    }
-                };
-                
-                const fileName = `Relatório_${investigationName.replace(/[^a-z0-9]/gi, '_')}_${formatDate(new Date())}.pdf`;
-                const pdfDoc = pdfMake.createPdf(docDefinition);
-                
-                pdfDoc.getBlob(function(blob) {
-                    saveAs(blob, fileName);
-                    resolve();
-                });
-            });
-        }
+text = text.replace(
+    """                                { text: 'TRANSAÇÃO', style: 'tableHeader' },
+                                { text: 'DATA/HORA', style: 'tableHeader' }""",
+    """                                { text: 'TRANSAÇÃO', style: 'tableHeader' },
+                                { text: 'REDE/STATUS', style: 'tableHeader' },
+                                { text: 'DATA/HORA', style: 'tableHeader' }""",
+    1
+)
 
-    </script>
-</body>
-</html>
+text = text.replace(
+    '''text: 'NOTA: Este relatório contém o registro de todas as evidências submetidas através do sistema SELO. Cada evidência foi registrada na blockchain com um carimbo de data e hora imutável. Os hashes podem ser verificados recalculando o SHA-256 dos arquivos originais (desconsiderando o prefixo "0x" nas transações).',''',
+    '''text: 'NOTA: Este relatório contém o registro das evidências submetidas ao sistema SELO. O hash SHA256 de cada arquivo é inserido no campo de dados da transação. O status "Confirmada" indica inclusão em bloco. O status "Pendente" indica que a transação foi transmitida e recebeu um hash de transação, mas sua inclusão em bloco ainda não havia sido confirmada no momento da geração do relatório.',''',
+    1
+)
+
+# Validações simples
+checks = [
+    "async function registerHashOnChain(hash)",
+    'status: "pending"',
+    'status: "confirmed"',
+    "getNetworkConfig(chainId)",
+    "REDE/STATUS",
+    "anchorAddress"
+]
+
+for item in checks:
+    if item not in text:
+        raise RuntimeError(f"Validação falhou: {item}")
+
+dst.write_text(text, encoding="utf-8")
+
+print(f"HTML completo corrigido criado em: {dst}")
+print(f"Tamanho final: {dst.stat().st_size} bytes")
