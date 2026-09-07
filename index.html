@@ -726,24 +726,69 @@
         // Função para registrar um hash na blockchain
         async function registerHashOnChain(hash) {
             try {
+                if (!web3) {
+                    throw new Error("Web3 não inicializado. Conecte a carteira primeiro.");
+                }
+
                 const accounts = await web3.eth.getAccounts();
-                const gasPrice = await web3.eth.getGasPrice();
+
+                if (!accounts || accounts.length === 0) {
+                    throw new Error("Nenhuma conta disponível na carteira.");
+                }
+
+                const from = accounts[0];
+
+                /*
+                 * IMPORTANTE:
+                 * Algumas redes EVM rejeitam transações em que from === to
+                 * quando a transação contém dados.
+                 *
+                 * O hash continua sendo gravado integralmente no campo input
+                 * da transação, mas a transação é enviada para um endereço
+                 * neutro em vez de ser enviada para a própria carteira.
+                 *
+                 * Nenhum ativo é transferido, pois value = 0.
+                 */
+                const anchorAddress = "0x000000000000000000000000000000000000dEaD";
+
+                const data = hash.startsWith("0x") ? hash : "0x" + hash;
+
+                if (!/^0x[0-9a-fA-F]{64}$/.test(data)) {
+                    throw new Error("Hash SHA-256 inválido.");
+                }
+
                 const tx = {
-                    from: accounts[0],
-                    to: accounts[0],
-                    value: web3.utils.toWei('0', 'ether'),
-                    gas: 50000,
-                    gasPrice: gasPrice,
-                    data: "0x" + hash
+                    from: from,
+                    to: anchorAddress,
+                    value: "0x0",
+                    data: data
                 };
+
+                // Estimar o gas de acordo com a rede atual.
+                const estimatedGas = await web3.eth.estimateGas(tx);
+
+                // Margem adicional de 20 por cento para evitar insuficiência
+                // causada por pequenas diferenças entre estimativa e execução.
+                tx.gas = Math.ceil(Number(estimatedGas) * 1.20);
+
                 const receipt = await web3.eth.sendTransaction(tx);
-                return { 
-                    txHash: receipt.transactionHash, 
-                    date: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) 
+
+                return {
+                    txHash: receipt.transactionHash,
+                    date: new Date().toLocaleString("pt-BR", {
+                        timeZone: "America/Sao_Paulo"
+                    })
                 };
+
             } catch (err) {
-                console.error("Erro ao registrar na blockchain: ", err);
-                return null;
+                console.error("Erro ao registrar na blockchain:", err);
+
+                const message =
+                    err?.message ||
+                    err?.data?.message ||
+                    "Erro desconhecido ao registrar a evidência.";
+
+                throw new Error(message);
             }
         }
 
